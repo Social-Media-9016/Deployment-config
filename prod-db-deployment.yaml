@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: db-connection
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: db-connection
+  template:
+    metadata:
+      labels:
+        app: db-connection
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: role
+                operator: In
+                values:
+                - database
+      containers:
+      - name: cloud-sql-proxy
+        image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.1.0
+        args:
+        - "--port=5432"
+        - "--credentials-file=/secrets/service_account.json"
+        - "ece9016-social-network:northamerica-northeast1:database-sql"
+        ports:
+        - containerPort: 5432
+        volumeMounts:
+        - name: cloudsql-instance-credentials
+          mountPath: /secrets/
+          readOnly: true
+      volumes:
+      - name: cloudsql-instance-credentials
+        secret:
+          secretName: cloudsql-instance-credentials
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-db-service
+spec:
+  selector:
+    app: db-connection
+  ports:
+  - port: 5432
+    targetPort: 5432
+  type: ClusterIP

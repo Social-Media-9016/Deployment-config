@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-server
+  labels:
+    app: web-server
+    part-of: social-network
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: web-server
+  template:
+    metadata:
+      labels:
+        app: web-server
+    spec:
+      containers:
+      - name: web-app
+        image: us-docker.pkg.dev/ece9016-social-network/social-network-web/social-network-web@sha256:3aa7af506bc37dc2f555346a1a380a61a29ca8955d9d7c8f0c90ec03a2082025
+        ports:
+        - containerPort: 3000
+        env:
+        # PostgreSQL connection
+        - name: DB_HOST
+          value: postgres-db-service
+        - name: DB_PORT
+          value: "5432"
+        - name: DB_NAME
+          value: social_network
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: username
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: password
+        
+        # Firebase configuration
+        - name: FIREBASE_API_KEY
+          value: "AIzaSyADLvSeHqoaUxGrOoYW1SgZ8C-U9SnxyNI"
+        - name: FIREBASE_AUTH_DOMAIN
+          value: "ece9016-social-network.firebaseapp.com"
+        - name: FIREBASE_PROJECT_ID
+          value: "ece9016-social-network"
+        - name: FIREBASE_STORAGE_BUCKET
+          value: "ece9016-social-network-dev.appspot.com"
+        - name: FIREBASE_MESSAGING_SENDER_ID
+          value: "225967251911"
+        - name: FIREBASE_APP_ID
+          value: "1:225967251911:web:941fb1cd132fb58d0739e2"
+        - name: FIREBASE_DATABASE_URL
+          value: "https://ece9016-social-network-default-rtdb.firebaseio.com/"

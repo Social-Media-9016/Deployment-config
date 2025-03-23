@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-server
+  labels:
+    app: web-server
+    part-of: social-network
+spec:
+  replicas: 2  
+  selector:
+    matchLabels:
+      app: web-server
+  template:
+    metadata:
+      labels:
+        app: web-server
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: role
+                operator: In
+                values:
+                - webserver
+      containers:
+      - name: web-app
+        image: us-docker.pkg.dev/ece9016-social-network/social-network-web/social-network-web:prod1.0
+        ports:
+        - containerPort: 3000  
+        - containerPort: 3001  #Backend
+        env:
+        - name: DB_HOST
+          value: postgres-db-service
+        - name: DB_PORT
+          value: "5432"
+        - name: DB_NAME
+          value: social_network
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: username
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: password
+        
+        # Firebase
+        - name: FIREBASE_API_KEY
+          value: "AIzaSyADLvSeHqoaUxGrOoYW1SgZ8C-U9SnxyNI"
+        - name: FIREBASE_AUTH_DOMAIN
+          value: "ece9016-social-network.firebaseapp.com"
+        - name: FIREBASE_PROJECT_ID
+          value: "ece9016-social-network"
+        - name: FIREBASE_STORAGE_BUCKET
+          value: "ece9016-social-network-dev.appspot.com"
+        - name: FIREBASE_MESSAGING_SENDER_ID
+          value: "225967251911"
+        - name: FIREBASE_APP_ID
+          value: "1:225967251911:web:941fb1cd132fb58d0739e2"
+        - name: FIREBASE_DATABASE_URL
+          value: "https://ece9016-social-network-default-rtdb.firebaseio.com/"
+        
+        - name: PORT
+          value: "3001"
+        - name: NODE_ENV
+          value: production
